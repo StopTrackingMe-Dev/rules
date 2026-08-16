@@ -1,0 +1,65 @@
+name: Publish rules
+
+on:
+  push:
+    paths:
+      - "rules/**"
+      - "tools/build_rules.py"
+      - ".github/workflows/publish-rules.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-rules
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate and bundle rules
+        run: python tools/build_rules.py --output build/rules.json
+
+      - name: Create checksum
+        working-directory: build
+        run: sha256sum rules.json > rules.sha256
+
+      - name: Check whether the latest release already contains this bundle
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/latest-rules"
+          if gh release download --pattern rules.json --dir "$RUNNER_TEMP/latest-rules"; then
+            if cmp -s build/rules.json "$RUNNER_TEMP/latest-rules/rules.json"; then
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "The generated bundle is unchanged; skipping release publication."
+              exit 0
+            fi
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        if: steps.changed.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="rules-$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" build/rules.json build/rules.sha256 \
+            --target "$GITHUB_SHA" \
+            --title "Rules ${tag#rules-}" \
+            --notes "Automated rules bundle from ${GITHUB_SHA}."
