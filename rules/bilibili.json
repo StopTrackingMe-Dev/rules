@@ -3,7 +3,7 @@
   "rules": [
     {
       "id": "builtin.bilibili.share-clean",
-      "version": 7,
+      "version": 8,
       "displayName": "哔哩哔哩",
       "source": {
         "kind": "REMOTE",
@@ -40,10 +40,31 @@
           "className": "androidx.recyclerview.widget.RecyclerView"
         }
       ],
+      "sharePanelFingerprintAlternatives": [
+        [
+          {
+            "textRegex": "^(分享(到|至)?|分享到|Share( to)?)$",
+            "descriptionRegex": "^(分享(到|至)?|分享到|Share( to)?)$",
+            "className": "android.widget.TextView"
+          },
+          {
+            "className": "androidx.compose.ui.platform.ComposeView"
+          },
+          {
+            "descriptionRegex": "^(关闭|關閉|Close)$",
+            "className": "android.widget.ImageView",
+            "clickable": true
+          }
+        ]
+      ],
       "copyLinkScrollAnchorSelectors": [
         {
           "resourceId": "recycler",
           "className": "androidx.recyclerview.widget.RecyclerView"
+        },
+        {
+          "descriptionRegex": "^(微信|朋友圈|QQ|QQ空间|微博|复制链接|复制連結|Copy Link|更多|More)$",
+          "className": "android.view.View"
         }
       ],
       "copyLinkSelectors": [

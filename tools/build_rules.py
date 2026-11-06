@@ -20,6 +20,7 @@ from typing import Any
 MAX_BUNDLE_BYTES = 512 * 1024
 MAX_RULES_PER_BUNDLE = 32
 MAX_SELECTORS = 24
+MAX_FINGERPRINT_ALTERNATIVES = 7
 MAX_CLICKABLE_PARENT_DEPTH = 8
 MAX_REDIRECTS = 5
 MAX_HOSTS = 32
@@ -482,7 +483,7 @@ def validate_rule(value: Any, path: str) -> dict[str, Any]:
             "redirectPolicy",
             "cleaningPolicy",
         },
-        {"copyLinkScrollAnchorSelectors", "copyTriggerMode", "sharePreview"},
+        {"copyLinkScrollAnchorSelectors", "copyTriggerMode", "sharePreview", "sharePanelFingerprintAlternatives"},
         path,
     )
     rule_id = require_string(rule["id"], f"{path}.id")
@@ -496,6 +497,13 @@ def validate_rule(value: Any, path: str) -> dict[str, Any]:
     validate_target(rule["target"], f"{path}.target")
     validate_selectors(rule["shareTriggerSelectors"], f"{path}.shareTriggerSelectors")
     validate_selectors(rule["sharePanelFingerprint"], f"{path}.sharePanelFingerprint")
+    if "sharePanelFingerprintAlternatives" in rule:
+        alternatives_path = f"{path}.sharePanelFingerprintAlternatives"
+        alternatives = require_array(rule["sharePanelFingerprintAlternatives"], alternatives_path)
+        if not 1 <= len(alternatives) <= MAX_FINGERPRINT_ALTERNATIVES:
+            fail(alternatives_path, f"must contain 1..{MAX_FINGERPRINT_ALTERNATIVES} groups")
+        for index, group in enumerate(alternatives):
+            validate_selectors(group, f"{alternatives_path}[{index}]")
     if "copyLinkScrollAnchorSelectors" in rule:
         validate_selectors(rule["copyLinkScrollAnchorSelectors"], f"{path}.copyLinkScrollAnchorSelectors")
     validate_selectors(rule["copyLinkSelectors"], f"{path}.copyLinkSelectors")

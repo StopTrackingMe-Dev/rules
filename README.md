@@ -30,3 +30,18 @@ application's `RuleParser` remains the final compatibility check.
 `.github/workflows/publish-rules.yml` runs when rule sources change, can be started manually,
 and runs daily on a cron schedule. It skips publishing when the generated bundle is unchanged.
 Each published release contains `rules.json` and its SHA-256 checksum.
+
+## Alternative share-panel layouts
+
+`sharePanelFingerprint` remains the required original AND group. Optional
+`sharePanelFingerprintAlternatives` adds 1–7 alternative AND groups, each containing
+1–24 selectors. Any complete group identifies the panel; partial matches from
+different groups cannot be combined. Omitting the field preserves existing behavior.
+
+The Bilibili rule keeps its original fingerprint and adds the Compose share panel
+captured over ADB on Bilibili 9.17.0 (versionCode 9170300). Copy-link matching still
+accepts text and accessibility descriptions; channel labels anchor horizontal scrolling.
+
+Rules using alternatives require the updated StopTracking client. Older clients reject
+unknown fields and therefore cannot load the updated bundle. Release the client support
+before publishing these rules.
